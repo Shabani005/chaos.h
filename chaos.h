@@ -26,7 +26,11 @@
 #define CHAOS_ASSERT assert
 #endif
 
+#ifndef CHAOS_TODO
+#include <stdio.h>
 #define CHAOS_TODO(message) do { fprintf(stderr, "%s:%d TODO: %s\n", __FILE__, __LINE__, message); abort(); } while(0)
+#endif
+
 #define CHAOS_ARRAY_LEN(array) (sizeof(array)/sizeof(array[0]))
 
 #define chaos_da_reserve(da, expected_capacity)                                            \
@@ -150,7 +154,7 @@ CHAOSDEF bool chaos_is_int(char* v);
   #define is_int          chaos_is_int
   #define sb_append_null  chaos_sb_append_null
   #define sb_append_cstr  chaos_sb_append_cstr
-  #define sb_appendf      chaos_sb_appenf
+  #define sb_appendf      chaos_sb_appendf
   #define trim_left       chaos_trim_left
   #define trim_right      chaos_trim_right
   #define trim            chaos_trim
@@ -163,7 +167,7 @@ CHAOSDEF bool chaos_is_int(char* v);
   #define CHAOS_IMPLEMENTATION | after including the header
 */
 
-#ifdef CHAOS_IMPELEMENTATION
+#ifdef CHAOS_IMPLEMENTATION
 
 /*
   ======== FILE RELATED UTILITIES =========
@@ -368,7 +372,7 @@ CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
     if (i + 1 < arr->count) total_len += 1;
   }
 
-  char *cmd = malloc(total_len + 1);
+  char *cmd = CHAOS_REALLOC(NULL, total_len + 1);
 
   if (!cmd) {
     fprintf(stderr, "Allocation failed in cmd_run\n");
@@ -483,4 +487,4 @@ CHAOSDEF bool chaos_is_int(char* v){
   }
   return true;
 }
-#endif // CHAOS_IMPLEMENTATION  
+#endif // CHAOS_IMPLEMENTATION
