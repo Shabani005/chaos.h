@@ -403,9 +403,12 @@ CHAOSDEF void chaos_cmd_append(Chaos_cmd_arr *arr, char* value){
 
 
 CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
+  #if !defined(_WIN32)
+    CHAOS_TODO("Not Implemented on Windows\n");
+  #endif
+  
   #if !defined(__GNUC__) || defined(__clang__)
-    fprintf(stderr, "cmd_run does not support windows for now\n");
-    return false;
+    CHAOS_TODO("cmd_run does not support bad compilers D:\n");
   #endif
 
   if (arr->count < 1) {
