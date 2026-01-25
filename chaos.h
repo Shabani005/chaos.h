@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.1.3
+  chaos.h - v1.2.3
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -574,27 +574,32 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
 #endif // CHAOS_IMPLEMENTATION
 
 
+#ifdef CHAOS_GC
 
-// #ifdef CHAOS_GC
 
-// #undef arena_alloc
-// #undef arena_sprintf
+static chaos_arena *__chaos_gc;
 
-// #define arena_alloc(size_b) \
-//   chaos_arena_alloc(__gc, (size_b))
+int chaos_entry(int argc, char **argv);
 
-// #define arena_sprintf(fmt, ...) \
-//   chaos_arena_sprintf(__gc, (fmt), ##__VA_ARGS__)
+#undef arena_alloc
+#undef arena_sprintf
 
-// #undef main
-// #define main(...)                                               \
-//   int main(int argc, char **argv) {                             \
-//     chaos_arena __arena = {0};                                  \
-//     chaos_arena *__gc = &__arena;                               \
-//     int __ret = chaos_entry(argc, argv);                        \
-//     chaos_arena_free(__gc);                                     \
-//     return __ret;                                               \
-//   }                                                             \
-//   int chaos_entry(__VA_ARGS__)
+#define arena_alloc(size_b) \
+  chaos_arena_alloc(__chaos_gc, (size_b))
 
-// #endif // CHAOS_GC
+#define arena_sprintf(fmt, ...) \
+  chaos_arena_sprintf(__chaos_gc, (fmt), ##__VA_ARGS__)
+
+
+#undef main
+#define main(...)                                               \
+  int main(int argc, char **argv) {                             \
+    static chaos_arena __arena = {0};                           \
+    __chaos_gc = &__arena;                                      \
+    int __ret = chaos_entry(argc, argv);                        \
+    chaos_arena_free(__chaos_gc);                               \
+    return __ret;                                               \
+  }                                                             \
+  int chaos_entry(__VA_ARGS__)
+
+#endif // CHAOS_GC
