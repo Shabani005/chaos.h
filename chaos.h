@@ -573,3 +573,27 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   return buf;
 }
 #endif // CHAOS_IMPLEMENTATION
+
+
+
+#ifdef CHAOS_GC
+
+#define arena_alloc(size_b) \
+  arena_alloc(__gc, (size_b))
+
+#define arena_sprintf(fmt, ...) \
+  arena_sprintf(__gc, (fmt), ##__VA_ARGS__)
+
+
+#define main(...)                                               \
+  int main(int argc, char **argv) {                             \
+    chaos_arena __arena = {0};                                  \
+    chaos_arena *__gc = &__arena;                               \
+    int __chaos_ret = chaos_entry(argc, argv);                  \
+    arena_free(__gc);                                           \
+    return __chaos_ret;                                         \
+  }                                                             \
+  int chaos_entry(__VA_ARGS__)
+
+#endif // CHAOS_GC
+
