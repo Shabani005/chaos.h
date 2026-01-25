@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.1.0
+  chaos.h - v1.1.1
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
