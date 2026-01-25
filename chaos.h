@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.1.2
+  chaos.h - v1.1.3
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -16,6 +16,7 @@
 #ifndef CHAOS_H_
 #define CHAOS_H_
 
+#include <cstdarg>
 #ifndef CHAOSDEF
 #define CHAOSDEF
 #endif
@@ -156,6 +157,7 @@ CHAOSDEF bool chaos_is_int(char* v);
 CHAOSDEF void* chaos_arena_alloc(chaos_arena *a, size_t size_b);
 CHAOSDEF void chaos_arena_free(chaos_arena *a);
 CHAOSDEF void chaos_arena_reset(chaos_arena *a);
+CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
 
 #endif // CHAOS_H_
 
@@ -192,6 +194,7 @@ CHAOSDEF void chaos_arena_reset(chaos_arena *a);
   #define arena_alloc     chaos_arena_alloc
   #define arena_free      chaos_arena_free
   #define arena_reset     chaos_arena_reset
+  #define arena_sprintf   chaos_arena_sprintf
 #endif
 
 /* 
@@ -548,5 +551,25 @@ CHAOSDEF void chaos_arena_free(chaos_arena *a){
 
 CHAOSDEF void chaos_arena_reset(chaos_arena *a){
   a->count = 0;
+}
+
+CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
+  va_list ap, ap2;
+
+  va_copy(ap2, ap);
+  va_start(ap, fmt);
+
+  size_t len = vsnprintf(NULL, 0, fmt, ap);
+
+  if (len < 0){
+    va_end(ap2);
+    return NULL;
+  }
+
+  char* buf = (char*)chaos_arena_alloc(a, sizeof(char) * (len+1)); 
+  vsnprintf(buf, len, fmt, ap2);
+  va_end(ap2);
+
+  return buf;
 }
 #endif // CHAOS_IMPLEMENTATION
