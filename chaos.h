@@ -355,8 +355,16 @@ CHAOSDEF void chaos_sb_append_cstr(Chaos_String_Builder *sb, char* s){
 }
 
 CHAOSDEF void chaos_sb_appendf(Chaos_String_Builder *sb, const char* fmt, ...){
+  char buf[CHAOS_TMP_BUF_SIZE];
 
+  va_list ap;
+  va_start(ap, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, ap);
+  va_end(ap);
+
+  chaos_sb_append_cstr(sb, buf);
 }
+
 /*
   ================= Build System Utils ===============
 */
