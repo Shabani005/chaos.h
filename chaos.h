@@ -555,8 +555,9 @@ CHAOSDEF void chaos_arena_reset(chaos_arena *a){
 CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   va_list ap, ap2;
 
-  va_copy(ap2, ap);
+  
   va_start(ap, fmt);
+  va_copy(ap2, ap);
 
   size_t len = vsnprintf(NULL, 0, fmt, ap);
 
