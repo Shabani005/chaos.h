@@ -16,7 +16,6 @@
 #ifndef CHAOS_H_
 #define CHAOS_H_
 
-#include <cstdarg>
 #ifndef CHAOSDEF
 #define CHAOSDEF
 #endif
@@ -576,24 +575,26 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
 
 
 
-#ifdef CHAOS_GC
+// #ifdef CHAOS_GC
 
-#define arena_alloc(size_b) \
-  arena_alloc(__gc, (size_b))
+// #undef arena_alloc
+// #undef arena_sprintf
 
-#define arena_sprintf(fmt, ...) \
-  arena_sprintf(__gc, (fmt), ##__VA_ARGS__)
+// #define arena_alloc(size_b) \
+//   chaos_arena_alloc(__gc, (size_b))
 
+// #define arena_sprintf(fmt, ...) \
+//   chaos_arena_sprintf(__gc, (fmt), ##__VA_ARGS__)
 
-#define main(...)                                               \
-  int main(int argc, char **argv) {                             \
-    chaos_arena __arena = {0};                                  \
-    chaos_arena *__gc = &__arena;                               \
-    int __chaos_ret = chaos_entry(argc, argv);                  \
-    arena_free(__gc);                                           \
-    return __chaos_ret;                                         \
-  }                                                             \
-  int chaos_entry(__VA_ARGS__)
+// #undef main
+// #define main(...)                                               \
+//   int main(int argc, char **argv) {                             \
+//     chaos_arena __arena = {0};                                  \
+//     chaos_arena *__gc = &__arena;                               \
+//     int __ret = chaos_entry(argc, argv);                        \
+//     chaos_arena_free(__gc);                                     \
+//     return __ret;                                               \
+//   }                                                             \
+//   int chaos_entry(__VA_ARGS__)
 
-#endif // CHAOS_GC
-
+// #endif // CHAOS_GC
