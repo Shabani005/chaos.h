@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.1.1
+  chaos.h - v1.1.2
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -500,20 +500,18 @@ CHAOSDEF bool chaos_is_float(char* v){
 
   if (v[0] == '.' || v[len-1] == '.') return false;
 
-  if (v[0] == '-' || v[0] == '+') sign++;
+  if (v[0] == '-' || v[0] == '+') sign=1;
   
-  for (size_t i=0; i<len; ++i){
-    if (dots > 1 || sign > 1) return false;
+  for (size_t i=sign; i<len; ++i){
+    if (dots > 1) return false;
+
     if (v[i] == '.') {
       dots++;
       continue;
-    } else if (v[i] == '-' || v[i] == '+') {
-      sign++;
-      continue;
-    }
+    }     
     if ((unsigned char)v[i] < '0' || (unsigned char)v[i] > '9') return false;
   }
-  return true;
+  return dots == 1;
 }
 
 CHAOSDEF bool chaos_is_int(char* v){
@@ -522,12 +520,10 @@ CHAOSDEF bool chaos_is_int(char* v){
 
   if (len==0) return false;
 
-  if (v[0] == '+' || v[0] == '-') sign++;
+  if (v[0] == '+' || v[0] == '-') sign=1;
   
-  for (size_t i=0; i<len; ++i){
-    if (sign > 1) return false;
+  for (size_t i=sign; i<len; ++i){
     if ((unsigned char)v[i] < '0' || (unsigned char)v[i] > '9') return false;
-    else if (v[0] == '+' || v[0] == '-') sign++;
   }
   return true;
 }
