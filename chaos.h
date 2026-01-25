@@ -69,6 +69,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <stdint.h>
 
 typedef struct {
   char* items;
@@ -86,6 +87,12 @@ typedef struct {
   size_t count;
   size_t capacity;
 } Chaos_cmd_arr;
+
+typedef struct {
+  uint8_t *items;
+  size_t count;
+  size_t capacity;
+} chaos_arena;
 
 /*
   ======== CONSTANTS ========
@@ -141,6 +148,15 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename);
 CHAOSDEF bool chaos_is_float(char* v);
 CHAOSDEF bool chaos_is_int(char* v);
 
+
+/*
+  ================= Arena functions ===================
+*/
+
+CHAOSDEF void* chaos_arena_alloc(chaos_arena *a, size_t size_b);
+CHAOSDEF void chaos_arena_free(chaos_arena *a);
+CHAOSDEF void chaos_arena_reset(chaos_arena *a);
+
 #endif // CHAOS_H_
 
 /*
@@ -151,6 +167,7 @@ CHAOSDEF bool chaos_is_int(char* v);
   #define TODO            CHAOS_TODO
   #define ARRAY_LEN       CHAOS_ARRAY_LEN
   #define da_append       chaos_da_append
+  #define da_reserve      chaos_da_reserve
   #define String_Builder  Chaos_String_Builder
   #define read_file       chaos_read_file
   #define write_file      chaos_write_file
@@ -171,6 +188,8 @@ CHAOSDEF bool chaos_is_int(char* v);
   #define trim            chaos_trim
   #define copy_file       chaos_copy_file
   #define rebuild         chaos_rebuild
+  #define arena           chaos_arena
+  #define arena_alloc     chaos_arena_alloc
 #endif
 
 /* 
@@ -511,5 +530,25 @@ CHAOSDEF bool chaos_is_int(char* v){
     else if (v[0] == '+' || v[0] == '-') sign++;
   }
   return true;
+}
+
+CHAOSDEF void* chaos_arena_alloc(chaos_arena *a, size_t size_b){
+  size_t offset = a->count;
+  
+  da_reserve(a, a->count + size_b);
+  a->count += size_b;
+  
+  return a->items + offset;
+}
+
+CHAOSDEF void chaos_arena_free(chaos_arena *a){
+  CHAOS_FREE(a->items);
+  a->items = NULL;
+  a->count = 0;
+  a->capacity = 0;
+}
+
+CHAOSDEF void chaos_arena_reset(chaos_arena *a){
+  a->count = 0;
 }
 #endif // CHAOS_IMPLEMENTATION
