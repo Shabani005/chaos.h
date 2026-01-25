@@ -1,7 +1,16 @@
 /*
-  chaos.h - v1.0.0
+  chaos.h - v1.1.0
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
+
+  Good to knows:
+  - String_Builders are basically like Java String builders, which means they're not supposed to be null terminated
+  - Dynamic Arrays are structures with a pointer to another structure or type. It is supposed to follow this structure:
+      items (pointer)
+      count
+      capacity
+  - chaos_temp_sprintf() returns a pointer to a null terminater string on the stack, which means that it WILL be reset when
+    called, this is why we introduced 20 temporary buffers -> temporarily allocated string will only get overwritten after 20 calls.
 */
 
 #ifndef CHAOS_H_
@@ -58,6 +67,8 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <time.h>
 
 typedef struct {
   char* items;
@@ -121,7 +132,7 @@ CHAOSDEF void chaos_sb_appendf(Chaos_String_Builder *sb, const char* fmt, ...);
 CHAOSDEF void chaos_cmd_append(Chaos_cmd_arr *arr, char* value);
 CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr);
 CHAOSDEF void chaos_copy_file(char* original_name, char* clone_name); 
-CHAOSDEF void chaos_rebuild(int argc, char **argv);
+CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename);
 
 /*
   =================== MISC Utilities ===================
@@ -236,9 +247,15 @@ CHAOSDEF bool chaos_does_file_exist(char *filename){
 }
 
 CHAOSDEF bool chaos_did_file_change(char *filename){
+  struct stat a, b;
+  
   char* old_file = chaos_temp_sprintf("%s.old", filename);
-  if (chaos_does_file_exist(old_file)) return true;
-  return false;
+  if (!chaos_does_file_exist(old_file)) return true;
+
+  stat(filename, &a);
+  stat(old_file, &b);
+  
+  return difftime(a.st_mtime, b.st_mtime) > 0; 
 }
 
 /*
@@ -338,7 +355,7 @@ CHAOSDEF void chaos_sb_append_cstr(Chaos_String_Builder *sb, char* s){
 }
 
 CHAOSDEF void chaos_sb_appendf(Chaos_String_Builder *sb, const char* fmt, ...){
-  CHAOS_TODO("NOT IMPLEMENTED");
+
 }
 /*
   ================= Build System Utils ===============
@@ -398,8 +415,10 @@ CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
 
   int ret = system(cmd);
   if (ret == -1) perror("system");
-  free(cmd);
 
+  free(cmd);
+  arr->count = 0;
+  
   return ret == 0; 
 }
 
@@ -410,37 +429,35 @@ CHAOSDEF void chaos_copy_file(char* original_name, char* clone_name){
   chaos_write_file(clone_name, &sb);
 } 
 
-CHAOSDEF void chaos_rebuild(int argc, char **argv){
-  char *filename = "builder.c";
-  char* cloned_file = chaos_temp_sprintf("%s.old", filename);
+CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
+  char* old = chaos_temp_sprintf("%s.old", filename);
 
-  if (chaos_does_file_exist(cloned_file)){
-    // printf("%s does exist\n", cloned_file);
-    if (chaos_did_file_change(filename)){
-      printf("[Rebuilding]\n");
-      chaos_copy_file(filename, cloned_file);
-
-      Chaos_cmd_arr cmd = {0};
-      char *fname = chaos_temp_sprintf("%s.old", filename);
-
-      chaos_cmd_append(&cmd, "gcc");
-      chaos_cmd_append(&cmd, "-o");
-      chaos_cmd_append(&cmd, fname);
-      chaos_cmd_append(&cmd, filename);
-      
-      chaos_cmd_run(&cmd);
-
-      printf("[INFO] rebuilt %s\n\n", filename);
-
-      for (size_t i=0; i<argc; ++i){
-        chaos_cmd_append(&cmd, argv[i]);
-      }
-      chaos_cmd_run(&cmd);
-      return;
-    } else {
-      chaos_copy_file(filename, cloned_file);
-    }
+  if (!chaos_does_file_exist(old)){
+    chaos_copy_file(filename, old);
+    return;
   }
+
+  if (!chaos_did_file_change(filename)) return;
+  
+  printf("[Rebuilding]\n");
+
+  chaos_copy_file(filename, old);
+
+  Chaos_cmd_arr cmd = {0};
+
+  chaos_cmd_append(&cmd, "gcc");
+  chaos_cmd_append(&cmd, "-o");
+  chaos_cmd_append(&cmd, argv[0]);
+  chaos_cmd_append(&cmd, filename);      
+  chaos_cmd_run(&cmd);
+
+  printf("[INFO] rebuilt %s\n\n", filename);
+
+  for (size_t i=0; i<argc; ++i) chaos_cmd_append(&cmd, argv[i]);
+
+  chaos_cmd_run(&cmd);
+  exit(0);
+  return;
 }
 
 /*
