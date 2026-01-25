@@ -190,6 +190,8 @@ CHAOSDEF void chaos_arena_reset(chaos_arena *a);
   #define rebuild         chaos_rebuild
   #define arena           chaos_arena
   #define arena_alloc     chaos_arena_alloc
+  #define arena_free      chaos_arena_free
+  #define arena_reset     chaos_arena_reset
 #endif
 
 /* 
