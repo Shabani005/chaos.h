@@ -15,6 +15,7 @@
   - File utils
   - "Build System" utils
   - misc utils
+  - Arenas
 ---  
 - Philosophy:
  - C is an old language but does not have to feel that way, this library attempts to port features from modern languages.
