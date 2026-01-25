@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.2.3
+  chaos.h - v1.3.3
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -577,7 +577,6 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
 
 #ifdef CHAOS_GC
 
-
 static chaos_arena *__chaos_gc;
 
 int chaos_entry(int argc, char **argv);
@@ -590,7 +589,6 @@ int chaos_entry(int argc, char **argv);
 
 #define arena_sprintf(fmt, ...) \
   chaos_arena_sprintf(__chaos_gc, (fmt), ##__VA_ARGS__)
-
 
 #undef main
 #define main(...)                                               \
