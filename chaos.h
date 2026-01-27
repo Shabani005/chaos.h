@@ -403,7 +403,7 @@ CHAOSDEF void chaos_cmd_append(Chaos_cmd_arr *arr, char* value){
 
 
 CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
-  #if !defined(_WIN32)
+  #if defined(_WIN32)
     CHAOS_TODO("Not Implemented on Windows\n");
   #endif
   
