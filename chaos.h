@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.3.4
+  chaos.h - v1.4.4
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -131,6 +131,7 @@ CHAOSDEF Chaos_String_View chaos_trim(Chaos_String_View *sv);
 CHAOSDEF void chaos_sb_append_null(Chaos_String_Builder *sb);
 CHAOSDEF void chaos_sb_append_cstr(Chaos_String_Builder *sb, char* s);
 CHAOSDEF void chaos_sb_appendf(Chaos_String_Builder *sb, const char* fmt, ...);
+CHAOSDEF Chaos_String_View chaos_sb_to_sv(Chaos_String_Builder *sb);
 
 /*
   ================= Build System Utils ===============
@@ -194,6 +195,7 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
   #define arena_free      chaos_arena_free
   #define arena_reset     chaos_arena_reset
   #define arena_sprintf   chaos_arena_sprintf
+  #define sv_to_sb        chaos_sv_to_sb
 #endif
 
 /* 
@@ -313,9 +315,7 @@ CHAOSDEF Chaos_String_View chaos_split_by_delim(Chaos_String_View *sv, char deli
   while (i < sv->count && sv->data[i] != delim){
     i++;
   }
-  
   Chaos_String_View result = chaos_sv_from_parts(sv->data, i);
-
   if (i < sv->count){
     sv->count -= i+1;
     sv->data  += i+1;
@@ -386,6 +386,10 @@ CHAOSDEF void chaos_sb_appendf(Chaos_String_Builder *sb, const char* fmt, ...){
   va_end(ap);
 
   chaos_sb_append_cstr(sb, buf);
+}
+
+CHAOSDEF Chaos_String_View chaos_sb_to_sv(Chaos_String_Builder *sb){
+  return chaos_sv_from_parts(sb->items, sb->count);
 }
 
 /*
