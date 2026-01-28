@@ -195,7 +195,7 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
   #define arena_free      chaos_arena_free
   #define arena_reset     chaos_arena_reset
   #define arena_sprintf   chaos_arena_sprintf
-  #define sv_to_sb        chaos_sv_to_sb
+  #define sb_to_sv        chaos_sb_to_sv
 #endif
 
 /* 
