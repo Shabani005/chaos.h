@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.4.4
+  chaos.h - v1.5.4
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -132,9 +132,12 @@ CHAOSDEF void chaos_sb_append_null(Chaos_String_Builder *sb);
 CHAOSDEF void chaos_sb_append_cstr(Chaos_String_Builder *sb, char* s);
 CHAOSDEF void chaos_sb_appendf(Chaos_String_Builder *sb, const char* fmt, ...);
 CHAOSDEF Chaos_String_View chaos_sb_to_sv(Chaos_String_Builder *sb);
+CHAOSDEF void chaos_printb(Chaos_String_Builder sb);
+CHAOSDEF void chaos_printv(Chaos_String_View sv);
+CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv);
 
 /*
-  ================= Build System Utils ===============
+  ================= Build System UTILITIES ===============
 */
 
 CHAOSDEF void chaos_cmd_append(Chaos_cmd_arr *arr, char* value);
@@ -143,12 +146,11 @@ CHAOSDEF void chaos_copy_file(char* original_name, char* clone_name);
 CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename);
 
 /*
-  =================== MISC Utilities ===================
+  =================== MISC UTILITIES ===================
 */
 
 CHAOSDEF bool chaos_is_float(char* v);
 CHAOSDEF bool chaos_is_int(char* v);
-
 
 /*
   ================= Arena functions ===================
@@ -161,6 +163,11 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
 
 #endif // CHAOS_H_
 
+#define chaos_print(sbv) _Generic((sbv),      \
+    Chaos_String_Builder: chaos_printb,       \
+    Chaos_String_View:    chaos_printv        \
+  ) (sbv)
+
 /*
   Functions in this library are Unnamespaced by default, to add the Chaos prefix do #define CHAOS_ADD_PREFIX
 */
@@ -171,6 +178,7 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
   #define da_append       chaos_da_append
   #define da_reserve      chaos_da_reserve
   #define String_Builder  Chaos_String_Builder
+  #define String_View     Chaos_String_View
   #define read_file       chaos_read_file
   #define write_file      chaos_write_file
   #define does_file_exist chaos_does_file_exist
@@ -196,7 +204,12 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
   #define arena_reset     chaos_arena_reset
   #define arena_sprintf   chaos_arena_sprintf
   #define sb_to_sv        chaos_sb_to_sv
+  #define print           chaos_print
+  #define printb          chaos_printb
+  #define printv          chaos_printv
+  #define sv_to_cstr      chaos_sv_to_cstr
 #endif
+
 
 /* 
   Here You Will find the Implementation for the above functions, to include implementations in your C file do
@@ -392,6 +405,20 @@ CHAOSDEF Chaos_String_View chaos_sb_to_sv(Chaos_String_Builder *sb){
   return chaos_sv_from_parts(sb->items, sb->count);
 }
 
+CHAOSDEF void chaos_printb(Chaos_String_Builder sb){
+  printf("%.*s\n", sb.count, sb.items);
+}
+
+CHAOSDEF void chaos_printv(Chaos_String_View sv){
+  printf("%.*s\n", sv.count, sv.data);
+}
+
+CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv) {
+  char *buf = CHAOS_REALLOC(NULL, sv->count + 1);
+  memcpy(buf, sv->data, sv->count);
+  buf[sv->count] = '\0';
+  return buf;
+}
 /*
   ================= Build System Utils ===============
 */
@@ -583,9 +610,7 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
 
 
 #ifdef CHAOS_GC
-
 static chaos_arena *__chaos_gc;
-
 int chaos_entry(int argc, char **argv);
 
 #undef arena_alloc
@@ -607,5 +632,4 @@ int chaos_entry(int argc, char **argv);
     return __ret;                                               \
   }                                                             \
   int chaos_entry(__VA_ARGS__)
-
 #endif // CHAOS_GC
