@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.5.4
+  chaos.h - v1.5.5
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -62,9 +62,17 @@
         (da)->items[(da)->count++] = (item);   \
     } while (0)
 
+#if !defined(_WIN32)
+  #include <unistd.h>
+#else
+  #include <windows.h>
+  #include <io.h>
+  #define access _access
+  #define F_OK 0
+#endif
+
 #include <stdbool.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -434,14 +442,6 @@ CHAOSDEF void chaos_cmd_append(Chaos_cmd_arr *arr, char* value){
 
 
 CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
-  #if defined(_WIN32)
-    CHAOS_TODO("Not Implemented on Windows\n");
-  #endif
-  
-  #if !defined(__GNUC__) || defined(__clang__)
-    CHAOS_TODO("cmd_run does not support bad compilers D:\n");
-  #endif
-
   if (arr->count < 1) {
     fprintf(stderr, "USAGE: provide more parameters\n");
     return false;
