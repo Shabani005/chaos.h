@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.5.6
+  chaos.h - v1.5.7
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -511,9 +511,9 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
   Chaos_cmd_arr cmd = {0};
 
   #ifdef _WIN32
-    chaos_cmd_append(&cmd, "gcc");
-  #else
     chaos_cmd_append(&cmd, "cl.exe");
+  #else
+    chaos_cmd_append(&cmd, "gcc");
   #endif
   chaos_cmd_append(&cmd, "-o");
   chaos_cmd_append(&cmd, argv[0]);
