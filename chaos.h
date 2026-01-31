@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.5.7
+  chaos.h - v1.5.8
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -605,7 +605,7 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   }
 
   char* buf = (char*)chaos_arena_alloc(a, sizeof(char) * (len+1)); 
-  vsnprintf(buf, len, fmt, ap2);
+  vsnprintf(buf, len+1, fmt, ap2);
   va_end(ap2);
 
   return buf;
