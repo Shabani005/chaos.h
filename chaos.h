@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.6.8
+  chaos.h - v1.6.9
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -250,7 +250,7 @@ CHAOSDEF void chaos_table_print(chaos_Table *t);
   #define Bucket          chaos_Bucket
   #define Table           chaos_Table
   #define hash_generic    chaos_hash_generic
-  #define hash            chaso_hash
+  #define hash            chaos_hash
   #define table_append    chaos_table_append
   #define table_index     chaos_table_index
   #define table_print     chaos_table_print
