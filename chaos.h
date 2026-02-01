@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.5.8
+  chaos.h - v1.6.8
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -102,6 +102,24 @@ typedef struct {
   size_t capacity;
 } chaos_arena;
 
+typedef struct {
+  uint32_t key;
+  char *value;
+  size_t freq;
+} chaos_KV;
+
+typedef struct {
+  chaos_KV *items;
+  size_t count;
+  size_t capacity;
+} chaos_Bucket;
+
+typedef struct {
+  chaos_Bucket *items;
+  size_t count;
+  size_t capacity;
+} chaos_Table;
+
 /*
   ======== CONSTANTS ========
 */
@@ -169,7 +187,19 @@ CHAOSDEF void chaos_arena_free(chaos_arena *a);
 CHAOSDEF void chaos_arena_reset(chaos_arena *a);
 CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
 
+/*
+  ================ Hash Table functions ================
+*/
+
+CHAOSDEF uint32_t djb33_hash(char *s, size_t len);
+CHAOSDEF uint32_t chaos_hash_generic(char *value, size_t len, uint32_t (*custom_hash)(char *, size_t));
+CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len);
+CHAOSDEF uint32_t chaos_table_index(chaos_Table *t, char *value, size_t len);
+CHAOSDEF void chaos_table_print(chaos_Table *t);
+
 #endif // CHAOS_H_
+
+#define chaos_hash(value, len) chaos_hash_generic((value), (len), djb33_hash)
 
 #define chaos_print(sbv) _Generic((sbv),      \
     Chaos_String_Builder: chaos_printb,       \
@@ -216,6 +246,14 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
   #define printb          chaos_printb
   #define printv          chaos_printv
   #define sv_to_cstr      chaos_sv_to_cstr
+  #define KV              chaos_KV
+  #define Bucket          chaos_Bucket
+  #define Table           chaos_Table
+  #define hash_generic    chaos_hash_generic
+  #define hash            chaso_hash
+  #define table_append    chaos_table_append
+  #define table_index     chaos_table_index
+  #define table_print     chaos_table_print
 #endif
 
 
@@ -609,6 +647,72 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   va_end(ap2);
 
   return buf;
+}
+
+CHAOSDEF uint32_t djb33_hash(char *s, size_t len) {
+  uint32_t h = 5381;
+  while (len--) {
+    h += (h << 5);
+    h ^= *s++;
+  }
+  return h;
+}
+
+CHAOSDEF uint32_t chaos_hash_generic(char *value, size_t len,
+                            uint32_t (*custom_hash)(char *, size_t)) {
+  return custom_hash(value, len);
+}
+
+
+CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len) {
+  if (t->items == NULL) {
+    t->count = 16;
+    t->items = calloc(t->count, sizeof(chaos_Bucket));
+  }
+
+  uint32_t key = chaos_hash(value, len);
+  chaos_Bucket *bucket = &t->items[key % t->count];
+
+  chaos_KV *found = NULL;
+
+  for (size_t i = 0; i < bucket->count; ++i) {
+    chaos_KV *kv = &bucket->items[i];
+
+    if (kv->key == key && strcmp(kv->value, value) == 0) {
+      found = kv;
+      break;
+    }
+  }
+
+  if (found) {
+    found->freq++;
+  } else {
+    chaos_da_append(bucket, ((chaos_KV){
+                                .key = key,
+                                .value = strdup(value),
+                                .freq = 1,
+                            }));
+  }
+}
+
+CHAOSDEF uint32_t chaos_table_index(chaos_Table *t, char *value, size_t len) {
+  return chaos_hash(value, len) % t->count;
+}
+
+CHAOSDEF void chaos_table_print(chaos_Table *t) {
+  for (size_t i = 0; i < t->count; ++i) {
+    chaos_Bucket *b = &t->items[i];
+
+    if (b->count == 0)
+      continue;
+
+    for (size_t j = 0; j < b->count; ++j) {
+      printf("value = %s\n", b->items[j].value);
+      printf("key = %u\n", b->items[j].key);
+      printf("freq %zu\n", b->items[j].freq);
+      printf("-----------\n");
+    }
+  }
 }
 #endif // CHAOS_IMPLEMENTATION
 
