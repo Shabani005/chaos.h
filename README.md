@@ -5,6 +5,12 @@
     wget https://raw.githubusercontent.com/Shabani005/chaos.h/refs/heads/master/chaos.h
   ```
 
+- Build Examples:
+```bash
+  cc -o builder builder.c
+  ./builder
+```
+
   ```c
     #define CHAOS_IMPLEMENTATION
     #include "chaos.h"
