@@ -732,7 +732,7 @@ int chaos_entry(int argc, char **argv);
 
 #undef main
 #define main(...)                                               \
-  int main(int argc, char **argv) {                             \
+  main(int argc, char **argv) {                             \
     static chaos_arena __arena = {0};                           \
     __chaos_gc = &__arena;                                      \
     int __ret = chaos_entry(argc, argv);                        \

@@ -14,7 +14,7 @@
     void* arena_alloc(size_t size_b);
 */
 
-main(int argc, char** argv){
+int main(int argc, char** argv){
   int *x = arena_alloc(10*sizeof(int));
 
   for (int i=0; i<10; ++i){
