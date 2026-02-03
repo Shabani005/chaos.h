@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.6.9
+  chaos.h - v1.7.9
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -150,6 +150,7 @@ CHAOSDEF bool chaos_did_file_change(char *filename);
 
 CHAOSDEF char* chaos_temp_sprintf(const char *fmt, ...);
 CHAOSDEF Chaos_String_View chaos_sv_from_parts(const char* data, size_t count);
+CHAOSDEF Chaos_String_View chaos_sv_from_cstr(char* data);
 CHAOSDEF Chaos_String_View chaos_split_by_delim(Chaos_String_View *sv, char delim);
 CHAOSDEF Chaos_String_View chaos_trim_left(Chaos_String_View *sv);
 CHAOSDEF Chaos_String_View chaos_trim_right(Chaos_String_View *sv);
@@ -222,6 +223,7 @@ CHAOSDEF void chaos_table_print(chaos_Table *t);
   #define does_file_exist chaos_does_file_exist
   #define temp_sprintf    chaos_temp_sprintf
   #define sv_from_parts   chaos_sv_from_parts
+  #define sv_from_cstr    chaos_sv_from_cstr
   #define split_by_delim  chaos_split_by_delim
   #define cmd_arr         Chaos_cmd_arr
   #define cmd_run         chaos_cmd_run
@@ -361,6 +363,14 @@ CHAOSDEF char* chaos_temp_sprintf(const char *fmt, ...) {
 }
 
 CHAOSDEF Chaos_String_View chaos_sv_from_parts(const char* data, size_t count){
+  Chaos_String_View sv;
+  sv.data = data;
+  sv.count = count;
+  return sv;
+}
+
+CHAOSDEF Chaos_String_View chaos_sv_from_cstr(char* data){
+  size_t count = strlen(data); 
   Chaos_String_View sv;
   sv.data = data;
   sv.count = count;
