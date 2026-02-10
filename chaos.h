@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.7.10
+  chaos.h - v1.7.11
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -462,11 +462,11 @@ CHAOSDEF Chaos_String_View chaos_sb_to_sv(Chaos_String_Builder *sb){
 }
 
 CHAOSDEF void chaos_printb(Chaos_String_Builder sb){
-  printf("%.*s", sb.count, sb.items);
+  printf("%.*s\n", sb.count, sb.items);
 }
 
 CHAOSDEF void chaos_printv(Chaos_String_View sv){
-  printf("%.*s", sv.count, sv.data);
+  printf("%.*s\n", sv.count, sv.data);
 }
 
 CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv) {
