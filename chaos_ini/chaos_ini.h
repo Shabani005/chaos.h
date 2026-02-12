@@ -1,3 +1,10 @@
+/*
+  chaos_ini.h - v1.0.0
+
+  Simple library used to parse .ini files, useful to add configs to simple applications without bloated systems.
+*/
+
+
 #include <chaos.h>
 #include <ctype.h>
 #include <inttypes.h>
