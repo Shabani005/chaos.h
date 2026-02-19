@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.8.11
+  chaos.h - v1.9.11
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -232,52 +232,55 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count);
 */
 
 #ifndef CHAOS_ADD_PREFIX
-  #define TODO            CHAOS_TODO
-  #define ARRAY_LEN       CHAOS_ARRAY_LEN
-  #define da_append       chaos_da_append
-  #define da_reserve      chaos_da_reserve
-  #define String_Builder  Chaos_String_Builder
-  #define String_View     Chaos_String_View
-  #define read_file       chaos_read_file
-  #define write_file      chaos_write_file
-  #define does_file_exist chaos_does_file_exist
-  #define temp_sprintf    chaos_temp_sprintf
-  #define sv_from_parts   chaos_sv_from_parts
-  #define sv_from_cstr    chaos_sv_from_cstr
-  #define split_by_delim  chaos_split_by_delim
-  #define cmd_arr         Chaos_cmd_arr
-  #define cmd_run         chaos_cmd_run
-  #define cmd_append      chaos_cmd_append
-  #define is_float        chaos_is_float
-  #define is_int          chaos_is_int
-  #define sb_append_null  chaos_sb_append_null
-  #define sb_append_cstr  chaos_sb_append_cstr
-  #define sb_appendf      chaos_sb_appendf
-  #define trim_left       chaos_trim_left
-  #define trim_right      chaos_trim_right
-  #define trim            chaos_trim
-  #define copy_file       chaos_copy_file
-  #define rebuild         chaos_rebuild
-  #define arena           chaos_arena
-  #define arena_alloc     chaos_arena_alloc
-  #define arena_free      chaos_arena_free
-  #define arena_reset     chaos_arena_reset
-  #define arena_sprintf   chaos_arena_sprintf
-  #define sb_to_sv        chaos_sb_to_sv
-  #define print           chaos_print
-  #define printb          chaos_printb
-  #define printv          chaos_printv
-  #define sv_to_cstr      chaos_sv_to_cstr
-  #define KV              chaos_KV
-  #define Bucket          chaos_Bucket
-  #define Table           chaos_Table
-  #define hash_generic    chaos_hash_generic
-  #define hash            chaos_hash
-  #define table_append    chaos_table_append
-  #define table_index     chaos_table_index
-  #define table_print     chaos_table_print
-  #define table_rehash    chaos_table_rehash
-  #define sv_to_sb        chaos_sv_to_sb
+  #define TODO              CHAOS_TODO
+  #define ARRAY_LEN         CHAOS_ARRAY_LEN
+  #define da_append         chaos_da_append
+  #define da_reserve        chaos_da_reserve
+  #define String_Builder    Chaos_String_Builder
+  #define String_View       Chaos_String_View
+  #define read_file         chaos_read_file
+  #define write_file        chaos_write_file
+  #define does_file_exist   chaos_does_file_exist
+  #define temp_sprintf      chaos_temp_sprintf
+  #define sv_from_parts     chaos_sv_from_parts
+  #define sv_from_cstr      chaos_sv_from_cstr
+  #define split_by_delim    chaos_split_by_delim
+  #define cmd_arr           Chaos_cmd_arr
+  #define cmd_run           chaos_cmd_run
+  #define cmd_append        chaos_cmd_append
+  #define is_float          chaos_is_float
+  #define is_int            chaos_is_int
+  #define sb_append_null    chaos_sb_append_null
+  #define sb_append_cstr    chaos_sb_append_cstr
+  #define sb_appendf        chaos_sb_appendf
+  #define trim_left         chaos_trim_left
+  #define trim_right        chaos_trim_right
+  #define trim              chaos_trim
+  #define copy_file         chaos_copy_file
+  #define rebuild           chaos_rebuild
+  #define arena             chaos_arena
+  #define arena_alloc       chaos_arena_alloc
+  #define arena_free        chaos_arena_free
+  #define arena_reset       chaos_arena_reset
+  #define arena_sprintf     chaos_arena_sprintf
+  #define sb_to_sv          chaos_sb_to_sv
+  #define print             chaos_print
+  #define printb            chaos_printb
+  #define printv            chaos_printv
+  #define sv_to_cstr        chaos_sv_to_cstr
+  #define KV                chaos_KV
+  #define Bucket            chaos_Bucket
+  #define Table             chaos_Table
+  #define hash_generic      chaos_hash_generic
+  #define hash              chaos_hash
+  #define table_append      chaos_table_append
+  #define table_index       chaos_table_index
+  #define table_print       chaos_table_print
+  #define table_rehash      chaos_table_rehash
+  #define sv_to_sb          chaos_sv_to_sb
+  #define Flag              Chaos_Flag
+  #define flags_print_help  chaos_flags_print_help
+  #define flags_parse       chaos_flags_parse
 #endif
 
 
