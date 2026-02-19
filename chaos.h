@@ -121,6 +121,16 @@ typedef struct {
   size_t len;
 } chaos_Table;
 
+typedef struct {
+  Chaos_String_View long_name;
+  Chaos_String_View short_name;
+  Chaos_String_View desc;
+
+  bool present;
+  Chaos_String_View value;
+  void (*dispatcher)(void);
+} Chaos_Flag;
+
 /*
   ======== CONSTANTS ========
 */
@@ -180,6 +190,13 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename);
 
 CHAOSDEF bool chaos_is_float(char* v);
 CHAOSDEF bool chaos_is_int(char* v);
+
+/*
+  ================== FLAG PARSING ======================
+*/
+
+CHAOSDEF void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags, size_t flag_count); 
+CHAOSDEF bool chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags, size_t flag_count);
 
 /*
   ================= Arena functions ===================
@@ -762,6 +779,113 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count) {
   }
 
   free(old_items);
+}
+
+void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags,
+                            size_t flag_count) {
+  printf("Usage: %s [options]\n\n", program_name);
+  printf("Options:\n");
+
+  for (size_t i = 0; i < flag_count; ++i) {
+    Chaos_Flag *f = &flags[i];
+
+    printf("  ");
+
+    if (f->short_name.count > 0) {
+      printf("-%.*s", (int)f->short_name.count, f->short_name.data);
+    }
+
+    if (f->long_name.count > 0) {
+      if (f->short_name.count > 0)
+        printf(", ");
+      printf("--%.*s", (int)f->long_name.count, f->long_name.data);
+    }
+
+    if (f->desc.count > 0) {
+      printf("\n      %.*s", (int)f->desc.count, f->desc.data);
+    }
+
+    printf("\n");
+  }
+}
+
+CHAOSDEF bool chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
+                                size_t flag_count) {
+
+  if (argc == 1) {
+    chaos_flags_print_help(argv[0], flags, flag_count);
+    return 0;
+  }
+  
+  for (size_t i = 1; i < argc; ++i) {
+    char *arg = argv[i];
+    if (arg[0] != '-')
+      continue;
+
+    Chaos_String_View sv = chaos_sv_from_cstr(arg);
+    bool is_long = false;
+
+    if (sv.count >= 2 && sv.data[0] == '-' && sv.data[1] == '-') {
+      sv.data += 2;
+      sv.count -= 2;
+      is_long = true;
+    } else if (sv.count >= 1 && sv.data[0] == '-') {
+      sv.data += 1;
+      sv.count -= 1;
+    } else {
+      continue;
+    }
+
+    Chaos_String_View name = sv;
+    Chaos_String_View value = {0};
+
+    Chaos_String_View tmp = sv;
+    Chaos_String_View left = split_by_delim(&tmp, '=');
+
+    if (tmp.count > 0) {
+      name = left;
+      value = tmp;
+    }
+
+    bool matched = false;
+    bool help_requested = false;
+
+    for (size_t f = 0; f < flag_count; ++f) {
+      Chaos_Flag *flag = &flags[f];
+
+      Chaos_String_View match = is_long ? flag->long_name : flag->short_name;
+
+      if (match.data == NULL || match.count == 0) {
+        continue;
+      }
+
+      if ((is_long && name.count == 4 && memcmp(name.data, "help", 4) == 0) ||
+          (!is_long && name.count == 1 && memcmp(name.data, "h", 1) == 0)) {
+        help_requested = true;
+        continue;
+      }
+
+      if (match.count == name.count &&
+          memcmp(match.data, name.data, name.count) == 0) {
+        flag->present = true;
+        flag->value = value;
+        matched = true;
+        if (flag->dispatcher)
+          flag->dispatcher();
+        break;
+      }
+    }
+
+    if (!matched) {
+      Chaos_String_View program = chaos_sv_from_cstr(argv[0]);
+      split_by_delim(&program, '/');
+      fprintf(stderr, "%.*s: error: unrecognized command-line option '%.*s'\n",
+              (int)program.count, program.data, (int)name.count, name.data);
+      chaos_flags_print_help(argv[0], flags, flag_count);
+      return false;
+    }
+  }
+  return true;
 }
 #endif // CHAOS_IMPLEMENTATION
 

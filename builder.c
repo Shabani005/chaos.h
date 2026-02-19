@@ -20,5 +20,6 @@ int main(int argc, char** argv){
   cc_flags_run(&cmd, "001_simple.c");
   cc_flags_run(&cmd, "002_src_hello_builder.c");
   cc_flags_run(&cmd, "003_free_at_exit_gc.c");
+  cc_flags_run(&cmd, "004_flag_parsing.c");
   return 0;
 }
