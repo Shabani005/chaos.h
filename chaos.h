@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.7.11
+  chaos.h - v1.8.11
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -163,6 +163,7 @@ CHAOSDEF Chaos_String_View chaos_sb_to_sv(Chaos_String_Builder *sb);
 CHAOSDEF void chaos_printb(Chaos_String_Builder sb);
 CHAOSDEF void chaos_printv(Chaos_String_View sv);
 CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv);
+CHAOSDEF void chaos_sv_to_sb(Chaos_String_View *sv, Chaos_String_Builder *sb);
 
 /*
   ================= Build System UTILITIES ===============
@@ -259,6 +260,7 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count);
   #define table_index     chaos_table_index
   #define table_print     chaos_table_print
   #define table_rehash    chaos_table_rehash
+  #define sv_to_sb        chaos_sv_to_sb
 #endif
 
 
@@ -478,6 +480,13 @@ CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv) {
   buf[sv->count] = '\0';
   return buf;
 }
+
+CHAOSDEF void chaos_sv_to_sb(Chaos_String_View *sv, Chaos_String_Builder *sb) {
+  char *buf = CHAOS_REALLOC(NULL, sv->count);
+  memcpy(buf, sv->data, sv->count);
+  chaos_sb_append_cstr(sb, buf);
+}
+
 /*
   ================= Build System Utils ===============
 */
