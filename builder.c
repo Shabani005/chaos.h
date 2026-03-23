@@ -1,5 +1,6 @@
 #define CHAOS_IMPLEMENTATION
-#include <chaos.h>
+#include "chaos.h"
+
 
 #define BUILD_FOLDER "./build/"
 

@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.9.11
+  chaos.h - v1.10.11
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -174,6 +174,8 @@ CHAOSDEF void chaos_printb(Chaos_String_Builder sb);
 CHAOSDEF void chaos_printv(Chaos_String_View sv);
 CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv);
 CHAOSDEF void chaos_sv_to_sb(Chaos_String_View *sv, Chaos_String_Builder *sb);
+CHAOSDEF bool chaos_starts_with_b(Chaos_String_Builder sb, char *text);
+CHAOSDEF bool chaos_starts_with_v(Chaos_String_View sv, char *text);
 
 /*
   ================= Build System UTILITIES ===============
@@ -218,14 +220,20 @@ CHAOSDEF uint32_t chaos_table_index(chaos_Table *t, char *value, size_t len);
 CHAOSDEF void chaos_table_print(chaos_Table *t);
 CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count);
 
-#endif // CHAOS_H_
-
 #define chaos_hash(value, len) chaos_hash_generic((value), (len), djb33_hash)
 
 #define chaos_print(sbv) _Generic((sbv),      \
     Chaos_String_Builder: chaos_printb,       \
     Chaos_String_View:    chaos_printv        \
   ) (sbv)
+
+#define chaos_starts_with(S, f) _Generic((S),  \
+  Chaos_String_Builder: chaos_starts_with_b,   \
+  Chaos_String_View: chaos_starts_with_v       \
+) ((S), (f))
+
+
+#endif // CHAOS_H_
 
 /*
   Functions in this library are Unnamespaced by default, to add the Chaos prefix do #define CHAOS_ADD_PREFIX
@@ -281,6 +289,9 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count);
   #define Flag              Chaos_Flag
   #define flags_print_help  chaos_flags_print_help
   #define flags_parse       chaos_flags_parse
+  #define starts_with_b     chaos_starts_with_b
+  #define starts_with_v     chaos_starts_with_v
+  #define starts_with       chaos_starts_with
 #endif
 
 
@@ -506,6 +517,27 @@ CHAOSDEF void chaos_sv_to_sb(Chaos_String_View *sv, Chaos_String_Builder *sb) {
   memcpy(buf, sv->data, sv->count);
   chaos_sb_append_cstr(sb, buf);
 }
+
+CHAOSDEF bool chaos_starts_with_b(Chaos_String_Builder sb, char *text) {
+  size_t i = 0;
+  while (text[i] != '\0') {
+    if (i >= sb.count) return false;
+    if (sb.items[i] != text[i]) return false;
+    i++;
+  }
+  return true;
+}
+
+CHAOSDEF bool chaos_starts_with_v(Chaos_String_View sv, char *text) {
+  size_t i = 0;
+  while (text[i] != '\0') {
+    if (i >= sv.count) return false;
+    if (sv.data[i] != text[i]) return false;
+    i++;
+  }
+  return true;
+}
+
 
 /*
   ================= Build System Utils ===============
@@ -784,7 +816,7 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count) {
   free(old_items);
 }
 
-void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags,
+CHAOSDEF void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags,
                             size_t flag_count) {
   printf("Usage: %s [options]\n\n", program_name);
   printf("Options:\n");
