@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.10.11
+  chaos.h - v1.10.12
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -645,27 +645,27 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
   =================== MISC Utilities ===================
 */
 
-CHAOSDEF bool chaos_is_float(char* v){
+CHAOSDEF bool chaos_is_float(char* v) {
   size_t len = strlen(v);
   size_t dots = 0;
   size_t sign = 0;
-  
-  if (len==0) return false;
+  bool has_digit = false;
 
-  if (v[0] == '.' || v[len-1] == '.') return false;
+  if (len == 0) return false;
 
-  if (v[0] == '-' || v[0] == '+') sign=1;
-  
-  for (size_t i=sign; i<len; ++i){
-    if (dots > 1) return false;
+  if (v[0] == '-' || v[0] == '+') sign = 1;
 
+  for (size_t i = sign; i < len; ++i) {
     if (v[i] == '.') {
       dots++;
-      continue;
-    }     
-    if ((unsigned char)v[i] < '0' || (unsigned char)v[i] > '9') return false;
+      if (dots > 1) return false;
+    } else if ((unsigned char)v[i] >= '0' && (unsigned char)v[i] <= '9') {
+        has_digit = true;
+    } else {
+        return false;
+    }
   }
-  return dots == 1;
+  return dots == 1 && has_digit;
 }
 
 CHAOSDEF bool chaos_is_int(char* v){
