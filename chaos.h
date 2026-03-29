@@ -40,6 +40,21 @@
 #define CHAOS_TODO(message) do { fprintf(stderr, "%s:%d TODO: %s\n", __FILE__, __LINE__, message); abort(); } while(0)
 #endif
 
+#ifndef CHAOS_PRINTF
+#include <stdio.h>
+#define CHAOS_PRINTF printf
+#endif
+
+#ifndef CHAOS_MEMCMP
+#include <string.h>
+#define CHAOS_MEMCMP memcmp
+#endif
+
+#ifndef CHAOS_CALLOC
+#include <stdlib.h>
+#define CHAOS_CALLOC calloc
+#endif
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ == 199901L
 char* strdup(const char *s) {
   int size = 0;
@@ -58,6 +73,13 @@ char* strdup(const char *s) {
 
 #define CHAOS_ARRAY_LEN(array) (sizeof(array)/sizeof(array[0]))
 
+
+#ifdef __cplusplus
+#define CHAOS_DECLTYPE_CAST(T) (decltype(T))
+#else
+#define CHAOS_DECLTYPE_CAST(T)
+#endif // __cplusplus
+
 #define chaos_da_reserve(da, expected_capacity)                                            \
     do {                                                                                   \
         if ((expected_capacity) > (da)->capacity) {                                        \
@@ -67,33 +89,52 @@ char* strdup(const char *s) {
             while ((expected_capacity) > (da)->capacity) {                                 \
                 (da)->capacity *= 2;                                                       \
             }                                                                              \
-            (da)->items = CHAOS_REALLOC((da)->items, (da)->capacity * sizeof(*(da)->items)); \
-            CHAOS_ASSERT((da)->items != NULL && "Buy more RAM lol");                         \
+            (da)->items = CHAOS_DECLTYPE_CAST((da)->items)CHAOS_REALLOC((da)->items, (da)->capacity * sizeof(*(da)->items)); \
+            CHAOS_ASSERT((da)->items != NULL && "Buy more RAM lol");                       \
         }                                                                                  \
     } while (0)
 
-#define chaos_da_append(da, item)              \
-    do {                                       \
+#define chaos_da_append(da, item)                \
+    do {                                         \
         chaos_da_reserve((da), (da)->count + 1); \
-        (da)->items[(da)->count++] = (item);   \
+        (da)->items[(da)->count++] = (item);     \
     } while (0)
 
-#if !defined(_WIN32)
+#ifdef __unix__
   #include <unistd.h>
-#else
+#elif defined(_WIN32)
   #include <windows.h>
   #include <io.h>
   #define access _access
   #define F_OK 0
 #endif
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
+#ifndef CHAOS_BOOL 
+  #include <stdbool.h>
+#else
+  typedef enum {false, true} bool;
+#endif
+
+
+#ifdef __unix__
 #include <sys/stat.h>
 #include <time.h>
 #include <stdint.h>
+
+#define UINT8_T uint8_t
+#define  UINT32_T uint32_t
+
+#elif
+  #ifndef UINT8_T
+    #define UINT8_T usigned char
+  #endif
+
+  #ifndef UINT32_T
+    #define UINT32_T unsigned int
+  #endif
+#endif
+
+#include <stdarg.h>
 
 typedef struct {
   char* items;
@@ -113,13 +154,13 @@ typedef struct {
 } Chaos_cmd_arr;
 
 typedef struct {
-  uint8_t *items;
+  UINT8_T *items;
   size_t count;
   size_t capacity;
 } chaos_arena;
 
 typedef struct {
-  uint32_t key;
+  UINT32_T key;
   char *value;
   size_t freq;
 } chaos_KV;
@@ -318,12 +359,13 @@ CHAOSDEF void chaos_table_free(chaos_Table *t);
   #define CHAOS_IMPLEMENTATION | after including the header
 */
 
-#ifdef CHAOS_IMPLEMENTATION
+// #ifdef CHAOS_IMPLEMENTATION
 
 /*
   ======== FILE RELATED UTILITIES =========
 */
 
+#ifdef CHAOS_IMPLEMENTATION
 CHAOSDEF bool chaos_read_file(char* file_name, Chaos_String_Builder *sb)
 { 
   FILE *f = fopen(file_name, "rb");
@@ -342,7 +384,7 @@ CHAOSDEF bool chaos_read_file(char* file_name, Chaos_String_Builder *sb)
   new_count = sb->count + m;
 
   if (new_count > sb->capacity){
-    sb->items = CHAOS_REALLOC(sb->items, new_count * sizeof(char));
+    sb->items = (char*)CHAOS_REALLOC(sb->items, new_count * sizeof(char));
     sb->capacity = new_count;
   }
   
@@ -386,6 +428,7 @@ CHAOSDEF bool chaos_does_file_exist(char *filename){
   return false;
 }
 
+#ifdef __unix__
 CHAOSDEF bool chaos_did_file_change(char *filename){
   struct stat a, b;
   
@@ -397,6 +440,7 @@ CHAOSDEF bool chaos_did_file_change(char *filename){
   
   return difftime(a.st_mtime, b.st_mtime) > 0; 
 }
+#endif
 
 /*
   ======== STRING RELATED UTILITIES =========
@@ -516,15 +560,15 @@ CHAOSDEF Chaos_String_View chaos_sb_to_sv(Chaos_String_Builder *sb){
 }
 
 CHAOSDEF void chaos_printb(Chaos_String_Builder sb){
-  printf("%.*s\n", sb.count, sb.items);
+  CHAOS_PRINTF("%.*s\n", (int)sb.count, sb.items);
 }
 
 CHAOSDEF void chaos_printv(Chaos_String_View sv){
-  printf("%.*s\n", sv.count, sv.data);
+  CHAOS_PRINTF("%.*s\n", (int)sv.count, sv.data);
 }
 
 CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv) {
-  char *buf = CHAOS_REALLOC(NULL, sv->count + 1);
+  char *buf = (char*)CHAOS_REALLOC(NULL, sv->count + 1);
   memcpy(buf, sv->data, sv->count);
   buf[sv->count] = '\0';
   return buf;
@@ -582,7 +626,7 @@ CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
     if (i + 1 < arr->count) total_len += 1;
   }
 
-  char *cmd = CHAOS_REALLOC(NULL, total_len + 1);
+  char *cmd = (char*)CHAOS_REALLOC(NULL, total_len + 1);
 
   if (!cmd) {
     fprintf(stderr, "Allocation failed in cmd_run\n");
@@ -604,7 +648,7 @@ CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
 
   cmd[pos] = '\0';
 
-  printf("[CMD] %s\n", cmd);
+  CHAOS_PRINTF("[CMD] %s\n", cmd);
 
   int ret = system(cmd);
   if (ret == -1) perror("system");
@@ -632,7 +676,7 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
 
   if (!chaos_did_file_change(filename)) return;
   
-  printf("[Rebuilding]\n");
+  CHAOS_PRINTF("[Rebuilding]\n");
 
   chaos_copy_file(filename, old);
 
@@ -648,7 +692,7 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
   chaos_cmd_append(&cmd, filename);      
   chaos_cmd_run(&cmd);
 
-  printf("[INFO] rebuilt %s\n\n", filename);
+  CHAOS_PRINTF("[INFO] rebuilt %s\n\n", filename);
 
   for (size_t i=0; i<argc; ++i) chaos_cmd_append(&cmd, argv[i]);
 
@@ -759,7 +803,7 @@ CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len) {
   if (t->items == NULL) {
     t->count = 16;
     t->len = 0;
-    t->items = calloc(t->count, sizeof(chaos_Bucket));
+    t->items = (chaos_Bucket*)CHAOS_CALLOC(t->count, sizeof(chaos_Bucket));
   } if (t->len*4 >= t->count * 3){
     chaos_table_rehash(t, t->count*2);
   }
@@ -819,10 +863,10 @@ CHAOSDEF void chaos_table_print(chaos_Table *t) {
       continue;
 
     for (size_t j = 0; j < b->count; ++j) {
-      printf("value = %s\n", b->items[j].value);
-      printf("key = %u\n", b->items[j].key);
-      printf("freq %zu\n", b->items[j].freq);
-      printf("-----------\n");
+      CHAOS_PRINTF("value = %s\n", b->items[j].value);
+      CHAOS_PRINTF("key = %u\n", b->items[j].key);
+      CHAOS_PRINTF("freq %zu\n", b->items[j].freq);
+      CHAOS_PRINTF("-----------\n");
     }
   }
 }
@@ -831,7 +875,7 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count) {
   chaos_Bucket *old_items = t->items;
   size_t old_count = t->count;
 
-  t->items = calloc(new_bucket_count, sizeof(chaos_Bucket));
+  t->items = (chaos_Bucket*)(new_bucket_count, sizeof(chaos_Bucket));
   t->count = new_bucket_count;
   t->len = 0;
 
@@ -854,29 +898,29 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count) {
 
 CHAOSDEF void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags,
                             size_t flag_count) {
-  printf("Usage: %s [options]\n\n", program_name);
-  printf("Options:\n");
+  CHAOS_PRINTF("Usage: %s [options]\n\n", program_name);
+  CHAOS_PRINTF("Options:\n");
 
   for (size_t i = 0; i < flag_count; ++i) {
     Chaos_Flag *f = &flags[i];
 
-    printf("  ");
+    CHAOS_PRINTF("  ");
 
     if (f->short_name.count > 0) {
-      printf("-%.*s", (int)f->short_name.count, f->short_name.data);
+      CHAOS_PRINTF("-%.*s", (int)f->short_name.count, f->short_name.data);
     }
 
     if (f->long_name.count > 0) {
       if (f->short_name.count > 0)
-        printf(", ");
-      printf("--%.*s", (int)f->long_name.count, f->long_name.data);
+        CHAOS_PRINTF(", ");
+      CHAOS_PRINTF("--%.*s", (int)f->long_name.count, f->long_name.data);
     }
 
     if (f->desc.count > 0) {
-      printf("\n      %.*s", (int)f->desc.count, f->desc.data);
+      CHAOS_PRINTF("\n      %.*s", (int)f->desc.count, f->desc.data);
     }
 
-    printf("\n");
+    CHAOS_PRINTF("\n");
   }
 }
 
@@ -930,14 +974,14 @@ CHAOSDEF bool chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
         continue;
       }
 
-      if ((is_long && name.count == 4 && memcmp(name.data, "help", 4) == 0) ||
-          (!is_long && name.count == 1 && memcmp(name.data, "h", 1) == 0)) {
+      if ((is_long && name.count == 4 && CHAOS_MEMCMP(name.data, "help", 4) == 0) ||
+          (!is_long && name.count == 1 && CHAOS_MEMCMP(name.data, "h", 1) == 0)) {
         help_requested = true;
         continue;
       }
 
       if (match.count == name.count &&
-          memcmp(match.data, name.data, name.count) == 0) {
+          CHAOS_MEMCMP(match.data, name.data, name.count) == 0) {
         flag->present = true;
         flag->value = value;
         matched = true;
