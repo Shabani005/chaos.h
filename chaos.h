@@ -35,9 +35,14 @@
 #define CHAOS_ASSERT assert
 #endif
 
+#ifndef CHAOS_FPRINTF
+#include <stdio.h>
+#define CHAOS_FPRINTF fprintf
+#endif
+
 #ifndef CHAOS_TODO
 #include <stdio.h>
-#define CHAOS_TODO(message) do { fprintf(stderr, "%s:%d TODO: %s\n", __FILE__, __LINE__, message); abort(); } while(0)
+#define CHAOS_TODO(message) do { CHAOS_FPRINTF(stderr, "%s:%d TODO: %s\n", __FILE__, __LINE__, message); abort(); } while(0)
 #endif
 
 #ifndef CHAOS_PRINTF
@@ -50,9 +55,24 @@
 #define CHAOS_MEMCMP memcmp
 #endif
 
+#ifndef CHAOS_MEMCPY
+#include <string.h>
+#define CHAOS_MEMCPY memcpy
+#endif
+
 #ifndef CHAOS_CALLOC
 #include <stdlib.h>
 #define CHAOS_CALLOC calloc
+#endif
+
+#ifndef CHAOS_VSNPRINTF
+#include <stdio.h>
+#define CHAOS_VSNPRINTF vsnprintf
+#endif
+
+#ifndef CHAOS_STRLEN
+#include <stdio.h>
+#define CHAOS_STRLEN strlen
 #endif
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ == 199901L
@@ -111,8 +131,10 @@ char* strdup(const char *s) {
 
 #ifndef CHAOS_BOOL 
   #include <stdbool.h>
+  #define CHAOS_BOOL bool
 #else
   typedef enum {false, true} bool;
+  #define CHAOS_BOOL bool;
 #endif
 
 
@@ -124,7 +146,7 @@ char* strdup(const char *s) {
 #define UINT8_T uint8_t
 #define  UINT32_T uint32_t
 
-#elif
+#else
   #ifndef UINT8_T
     #define UINT8_T usigned char
   #endif
@@ -183,7 +205,7 @@ typedef struct {
   Chaos_String_View short_name;
   Chaos_String_View desc;
 
-  bool present;
+  CHAOS_BOOL present;
   Chaos_String_View value;
   void (*dispatcher)(void);
 } Chaos_Flag;
@@ -208,10 +230,10 @@ typedef struct {
   ======== FILE RELATED UTILITIES =========
 */
 
-CHAOSDEF bool chaos_read_file(char* file_name, Chaos_String_Builder *sb);
-CHAOSDEF bool chaos_write_file(char* file_name, Chaos_String_Builder *sb);
-CHAOSDEF bool chaos_does_file_exist(char *filename);
-CHAOSDEF bool chaos_did_file_change(char *filename);
+CHAOSDEF CHAOS_BOOL chaos_read_file(char* file_name, Chaos_String_Builder *sb);
+CHAOSDEF CHAOS_BOOL chaos_write_file(char* file_name, Chaos_String_Builder *sb);
+CHAOSDEF CHAOS_BOOL chaos_does_file_exist(char *filename);
+CHAOSDEF CHAOS_BOOL chaos_did_file_change(char *filename);
 /*
   ======== STRING RELATED UTILITIES =========
 */
@@ -231,31 +253,31 @@ CHAOSDEF void chaos_printb(Chaos_String_Builder sb);
 CHAOSDEF void chaos_printv(Chaos_String_View sv);
 CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv);
 CHAOSDEF void chaos_sv_to_sb(Chaos_String_View *sv, Chaos_String_Builder *sb);
-CHAOSDEF bool chaos_starts_with_b(Chaos_String_Builder sb, char *text);
-CHAOSDEF bool chaos_starts_with_v(Chaos_String_View sv, char *text);
+CHAOSDEF CHAOS_BOOL chaos_starts_with_b(Chaos_String_Builder sb, char *text);
+CHAOSDEF CHAOS_BOOL chaos_starts_with_v(Chaos_String_View sv, char *text);
 
 /*
   ================= Build System UTILITIES ===============
 */
 
-CHAOSDEF void chaos_cmd_append(Chaos_cmd_arr *arr, char* value);
-CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr);
+CHAOSDEF void       chaos_cmd_append(Chaos_cmd_arr *arr, char* value);
+CHAOSDEF CHAOS_BOOL chaos_cmd_run(Chaos_cmd_arr *arr);
 CHAOSDEF void chaos_copy_file(char* original_name, char* clone_name); 
-CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename);
+CHAOSDEF void       chaos_rebuild(int argc, char **argv, char* filename);
 
 /*
   =================== MISC UTILITIES ===================
 */
 
-CHAOSDEF bool chaos_is_float(char* v);
-CHAOSDEF bool chaos_is_int(char* v);
+CHAOSDEF CHAOS_BOOL chaos_is_float(char* v);
+CHAOSDEF CHAOS_BOOL chaos_is_int(char* v);
 
 /*
   ================== FLAG PARSING ======================
 */
 
 CHAOSDEF void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags, size_t flag_count); 
-CHAOSDEF bool chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags, size_t flag_count);
+CHAOSDEF CHAOS_BOOL chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags, size_t flag_count);
 
 /*
   ================= Arena functions ===================
@@ -270,10 +292,10 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...);
   ================ Hash Table functions ================
 */
 
-CHAOSDEF uint32_t djb33_hash(char *s, size_t len);
-CHAOSDEF uint32_t chaos_hash_generic(char *value, size_t len, uint32_t (*custom_hash)(char *, size_t));
+CHAOSDEF UINT32_T djb33_hash(char *s, size_t len);
+CHAOSDEF UINT32_T chaos_hash_generic(char *value, size_t len, uint32_t (*custom_hash)(char *, size_t));
 CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len);
-CHAOSDEF uint32_t chaos_table_index(chaos_Table *t, char *value, size_t len);
+CHAOSDEF UINT32_T chaos_table_index(chaos_Table *t, char *value, size_t len);
 CHAOSDEF void chaos_table_print(chaos_Table *t);
 CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count);
 CHAOSDEF void chaos_table_free(chaos_Table *t);
@@ -366,12 +388,14 @@ CHAOSDEF void chaos_table_free(chaos_Table *t);
 */
 
 #ifdef CHAOS_IMPLEMENTATION
-CHAOSDEF bool chaos_read_file(char* file_name, Chaos_String_Builder *sb)
+
+#ifdef __unix
+CHAOSDEF CHAOS_BOOL chaos_read_file(char* file_name, Chaos_String_Builder *sb)
 { 
   FILE *f = fopen(file_name, "rb");
 
   if (!f) {
-    fprintf(stderr, "Cannot open file: <%s>\n", file_name);
+    CHAOS_FPRINTF(stderr, "Cannot open file: <%s>\n", file_name);
     return false;
   }
 
@@ -392,7 +416,7 @@ CHAOSDEF bool chaos_read_file(char* file_name, Chaos_String_Builder *sb)
   fread(sb->items + sb->count, 1, m, f);
 
   if (fclose(f) != 0) {
-    fprintf(stderr, "Cannot close file <%s>\n", file_name);
+    CHAOS_FPRINTF(stderr, "Cannot close file <%s>\n", file_name);
     return false;
   }
   
@@ -400,36 +424,34 @@ CHAOSDEF bool chaos_read_file(char* file_name, Chaos_String_Builder *sb)
   return true;
 }
 
-
-CHAOSDEF bool chaos_write_file(char* file_name, Chaos_String_Builder *sb)
+CHAOSDEF CHAOS_BOOL chaos_write_file(char* file_name, Chaos_String_Builder *sb)
 { 
   FILE *f = fopen(file_name, "wb");
 
   if (!f) {
-    fprintf(stderr, "Cannot open file <%s>\n", file_name);
+    CHAOS_FPRINTF(stderr, "Cannot open file <%s>\n", file_name);
     return false;
   }
   
   size_t written = fwrite(sb->items, 1, sb->count, f);
   if (written != sb->count){
-    fprintf(stderr, "Failed to write file <%s>\n", file_name);
+    CHAOS_FPRINTF(stderr, "Failed to write file <%s>\n", file_name);
     return false;
   }
 
   if (fclose(f) != 0){
-    fprintf(stderr, "Cannot close file <%s>\n", file_name);
+    CHAOS_FPRINTF(stderr, "Cannot close file <%s>\n", file_name);
     return false;
   }
   return true;
 }
 
-CHAOSDEF bool chaos_does_file_exist(char *filename){
+CHAOSDEF CHAOS_BOOL chaos_does_file_exist(char *filename){
   if (access(filename, F_OK) == 0) return true;
   return false;
 }
 
-#ifdef __unix__
-CHAOSDEF bool chaos_did_file_change(char *filename){
+CHAOSDEF CHAOS_BOOL chaos_did_file_change(char *filename){
   struct stat a, b;
   
   char* old_file = chaos_temp_sprintf("%s.old", filename);
@@ -454,7 +476,7 @@ CHAOSDEF char* chaos_temp_sprintf(const char *fmt, ...) {
 
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(out, CHAOS_TMP_BUF_SIZE, fmt, ap);
+    CHAOS_VSNPRINTF(out, CHAOS_TMP_BUF_SIZE, fmt, ap);
     va_end(ap);
 
     return out;
@@ -468,7 +490,7 @@ CHAOSDEF Chaos_String_View chaos_sv_from_parts(const char* data, size_t count){
 }
 
 CHAOSDEF Chaos_String_View chaos_sv_from_cstr(char* data){
-  size_t count = strlen(data); 
+  size_t count = CHAOS_STRLEN(data); 
   Chaos_String_View sv;
   sv.data = data;
   sv.count = count;
@@ -549,7 +571,7 @@ CHAOSDEF void chaos_sb_appendf(Chaos_String_Builder *sb, const char* fmt, ...){
 
   va_list ap;
   va_start(ap, fmt);
-  vsnprintf(buf, sizeof(buf), fmt, ap);
+  CHAOS_VSNPRINTF(buf, sizeof(buf), fmt, ap);
   va_end(ap);
 
   chaos_sb_append_cstr(sb, buf);
@@ -569,7 +591,7 @@ CHAOSDEF void chaos_printv(Chaos_String_View sv){
 
 CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv) {
   char *buf = (char*)CHAOS_REALLOC(NULL, sv->count + 1);
-  memcpy(buf, sv->data, sv->count);
+  CHAOS_MEMCPY(buf, sv->data, sv->count);
   buf[sv->count] = '\0';
   return buf;
 }
@@ -578,7 +600,7 @@ CHAOSDEF void chaos_sv_to_sb(Chaos_String_View *sv, Chaos_String_Builder *sb) {
   for (size_t i = 0; i < sv->count; ++i) chaos_da_append(sb, sv->data[i]);
 }
 
-CHAOSDEF bool chaos_starts_with_b(Chaos_String_Builder sb, char *text) {
+CHAOSDEF CHAOS_BOOL chaos_starts_with_b(Chaos_String_Builder sb, char *text) {
   size_t i = 0;
   while (text[i] != '\0') {
     if (i >= sb.count) return false;
@@ -588,7 +610,7 @@ CHAOSDEF bool chaos_starts_with_b(Chaos_String_Builder sb, char *text) {
   return true;
 }
 
-CHAOSDEF bool chaos_starts_with_v(Chaos_String_View sv, char *text) {
+CHAOSDEF CHAOS_BOOL chaos_starts_with_v(Chaos_String_View sv, char *text) {
   size_t i = 0;
   while (text[i] != '\0') {
     if (i >= sv.count) return false;
@@ -603,7 +625,7 @@ CHAOSDEF bool chaos_starts_with_v(Chaos_String_View sv, char *text) {
   ================= Build System Utils ===============
 */
 CHAOSDEF void chaos_cmd_append(Chaos_cmd_arr *arr, char* value){
-  size_t len = strlen(value);
+  size_t len = CHAOS_STRLEN(value);
 
   Chaos_String_View sv = {0};
   sv.data = value;
@@ -612,10 +634,10 @@ CHAOSDEF void chaos_cmd_append(Chaos_cmd_arr *arr, char* value){
   chaos_da_append(arr, sv);
 }
 
-
-CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
+#if defined(__unix__) || defined(_WIN32)
+CHAOSDEF CHAOS_BOOL chaos_cmd_run(Chaos_cmd_arr *arr) {
   if (arr->count < 1) {
-    fprintf(stderr, "USAGE: provide more parameters\n");
+    CHAOS_FPRINTF(stderr, "USAGE: provide more parameters\n");
     return false;
   }
 
@@ -629,7 +651,7 @@ CHAOSDEF bool chaos_cmd_run(Chaos_cmd_arr *arr) {
   char *cmd = (char*)CHAOS_REALLOC(NULL, total_len + 1);
 
   if (!cmd) {
-    fprintf(stderr, "Allocation failed in cmd_run\n");
+    CHAOS_FPRINTF(stderr, "Allocation failed in cmd_run\n");
     return false;
   }
 
@@ -700,16 +722,17 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
   exit(0);
   return;
 }
+#endif
 
 /*
   =================== MISC Utilities ===================
 */
 
-CHAOSDEF bool chaos_is_float(char* v) {
-  size_t len = strlen(v);
+CHAOSDEF CHAOS_BOOL chaos_is_float(char* v) {
+  size_t len = CHAOS_STRLEN(v);
   size_t dots = 0;
   size_t sign = 0;
-  bool has_digit = false;
+  CHAOS_BOOL has_digit = false;
 
   if (len == 0) return false;
 
@@ -728,8 +751,8 @@ CHAOSDEF bool chaos_is_float(char* v) {
   return dots == 1 && has_digit;
 }
 
-CHAOSDEF bool chaos_is_int(char* v){
-  size_t len = strlen(v);
+CHAOSDEF CHAOS_BOOL chaos_is_int(char* v){
+  size_t len = CHAOS_STRLEN(v);
   size_t sign = 0;
 
   if (len==0) return false;
@@ -769,7 +792,7 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   va_start(ap, fmt);
   va_copy(ap2, ap);
 
-  size_t len = vsnprintf(NULL, 0, fmt, ap);
+  size_t len = CHAOS_VSNPRINTF(NULL, 0, fmt, ap);
   va_end(ap);
   
   if (len < 0){
@@ -778,13 +801,13 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   }
 
   char* buf = (char*)chaos_arena_alloc(a, sizeof(char) * (len+1)); 
-  vsnprintf(buf, len+1, fmt, ap2);
+  CHAOS_VSNPRINTF(buf, len+1, fmt, ap2);
   va_end(ap2);
 
   return buf;
 }
 
-CHAOSDEF uint32_t djb33_hash(char *s, size_t len) {
+CHAOSDEF UINT32_T djb33_hash(char *s, size_t len) {
   uint32_t h = 5381;
   while (len--) {
     h += (h << 5);
@@ -793,8 +816,8 @@ CHAOSDEF uint32_t djb33_hash(char *s, size_t len) {
   return h;
 }
 
-CHAOSDEF uint32_t chaos_hash_generic(char *value, size_t len,
-                            uint32_t (*custom_hash)(char *, size_t)) {
+CHAOSDEF UINT32_T chaos_hash_generic(char *value, size_t len,
+                            UINT32_T (*custom_hash)(char *, size_t)) {
   return custom_hash(value, len);
 }
 
@@ -808,7 +831,7 @@ CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len) {
     chaos_table_rehash(t, t->count*2);
   }
 
-  uint32_t key = chaos_hash(value, len);
+  UINT32_T key = chaos_hash(value, len);
   chaos_Bucket *bucket = &t->items[key % t->count];
 
   chaos_KV *found = NULL;
@@ -851,7 +874,7 @@ CHAOSDEF void chaos_table_free(chaos_Table *t) {
   t->len = 0;
 }
 
-CHAOSDEF uint32_t chaos_table_index(chaos_Table *t, char *value, size_t len) {
+CHAOSDEF UINT32_T chaos_table_index(chaos_Table *t, char *value, size_t len) {
   return chaos_hash(value, len) % t->count;
 }
 
@@ -884,7 +907,7 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count) {
 
     for (size_t j = 0; j < b->count; ++j) {
       chaos_KV *kv = &b->items[j];
-      uint32_t key = kv->key;
+      UINT32_T key = kv->key;
       chaos_Bucket *new_bucket = &t->items[key % t->count];
       chaos_da_append(new_bucket, *kv);
       t->len++;
@@ -924,7 +947,7 @@ CHAOSDEF void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags
   }
 }
 
-CHAOSDEF bool chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
+CHAOSDEF CHAOS_BOOL chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
                                 size_t flag_count) {
 
   if (argc == 1) {
@@ -938,7 +961,7 @@ CHAOSDEF bool chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
       continue;
 
     Chaos_String_View sv = chaos_sv_from_cstr(arg);
-    bool is_long = false;
+    CHAOS_BOOL is_long = false;
 
     if (sv.count >= 2 && sv.data[0] == '-' && sv.data[1] == '-') {
       sv.data += 2;
@@ -962,8 +985,8 @@ CHAOSDEF bool chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
       value = tmp;
     }
 
-    bool matched = false;
-    bool help_requested = false;
+    CHAOS_BOOL matched = false;
+    CHAOS_BOOL help_requested = false;
 
     for (size_t f = 0; f < flag_count; ++f) {
       Chaos_Flag *flag = &flags[f];
@@ -994,7 +1017,7 @@ CHAOSDEF bool chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
     if (!matched) {
       Chaos_String_View program = chaos_sv_from_cstr(argv[0]);
       split_by_delim(&program, '/');
-      fprintf(stderr, "%.*s: error: unrecognized command-line option '%.*s'\n",
+      CHAOS_FPRINTF(stderr, "%.*s: error: unrecognized command-line option '%.*s'\n",
               (int)program.count, program.data, (int)name.count, name.data);
       chaos_flags_print_help(argv[0], flags, flag_count);
       return false;
