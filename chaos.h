@@ -40,6 +40,22 @@
 #define CHAOS_TODO(message) do { fprintf(stderr, "%s:%d TODO: %s\n", __FILE__, __LINE__, message); abort(); } while(0)
 #endif
 
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ == 199901L
+char* strdup(const char *s) {
+  int size = 0;
+  while (s[size] != '\0') {
+    size++;
+  }
+
+  char *buf = CHAOS_REALLOC(NULL, sizeof(*buf) * size+1);
+  
+  for (size_t i=0; i<size; ++i){
+    buf[i] = s[i];
+  }
+  return buf;
+}
+#endif
+
 #define CHAOS_ARRAY_LEN(array) (sizeof(array)/sizeof(array[0]))
 
 #define chaos_da_reserve(da, expected_capacity)                                            \
@@ -219,6 +235,7 @@ CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len);
 CHAOSDEF uint32_t chaos_table_index(chaos_Table *t, char *value, size_t len);
 CHAOSDEF void chaos_table_print(chaos_Table *t);
 CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count);
+CHAOSDEF void chaos_table_free(chaos_Table *t);
 
 #define chaos_hash(value, len) chaos_hash_generic((value), (len), djb33_hash)
 
@@ -292,6 +309,7 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count);
   #define starts_with_b     chaos_starts_with_b
   #define starts_with_v     chaos_starts_with_v
   #define starts_with       chaos_starts_with
+  #define table_free        chaos_table_free
 #endif
 
 
@@ -513,9 +531,7 @@ CHAOSDEF char *chaos_sv_to_cstr(Chaos_String_View *sv) {
 }
 
 CHAOSDEF void chaos_sv_to_sb(Chaos_String_View *sv, Chaos_String_Builder *sb) {
-  char *buf = CHAOS_REALLOC(NULL, sv->count);
-  memcpy(buf, sv->data, sv->count);
-  chaos_sb_append_cstr(sb, buf);
+  for (size_t i = 0; i < sv->count; ++i) chaos_da_append(sb, sv->data[i]);
 }
 
 CHAOSDEF bool chaos_starts_with_b(Chaos_String_Builder sb, char *text) {
@@ -710,7 +726,8 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   va_copy(ap2, ap);
 
   size_t len = vsnprintf(NULL, 0, fmt, ap);
-
+  va_end(ap);
+  
   if (len < 0){
     va_end(ap2);
     return NULL;
@@ -773,6 +790,23 @@ CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len) {
   }
 }
 
+CHAOSDEF void chaos_table_free(chaos_Table *t) {
+  for (size_t i = 0; i < t->count; ++i) {
+    chaos_Bucket *b = &t->items[i];
+
+    for (size_t j = 0; j < b->count; ++j) {
+      free(b->items[j].value);
+    }
+    free(b->items);
+  }
+
+  free(t->items);
+  t->items = NULL;
+  t->count = 0;
+  t->capacity = 0;
+  t->len = 0;
+}
+
 CHAOSDEF uint32_t chaos_table_index(chaos_Table *t, char *value, size_t len) {
   return chaos_hash(value, len) % t->count;
 }
@@ -806,8 +840,10 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count) {
 
     for (size_t j = 0; j < b->count; ++j) {
       chaos_KV *kv = &b->items[j];
-      chaos_table_append(t, kv->value, strlen(kv->value));
-      free(kv->value);
+      uint32_t key = kv->key;
+      chaos_Bucket *new_bucket = &t->items[key % t->count];
+      chaos_da_append(new_bucket, *kv);
+      t->len++;
     }
 
     free(b->items);
