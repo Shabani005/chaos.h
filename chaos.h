@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.11.12
+  chaos.h - v1.12.12
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -55,6 +55,12 @@
 #define CHAOS_MEMCMP memcmp
 #endif
 
+#ifndef CHAOS_STRCMP
+#include <string.h>
+#define CHAOS_STRCMP strcmp
+#endif
+
+
 #ifndef CHAOS_MEMCPY
 #include <string.h>
 #define CHAOS_MEMCPY memcpy
@@ -75,20 +81,19 @@
 #define CHAOS_STRLEN strlen
 #endif
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ == 199901L
-char* strdup(const char *s) {
-  int size = 0;
-  while (s[size] != '\0') {
-    size++;
-  }
 
-  char *buf = CHAOS_REALLOC(NULL, sizeof(*buf) * size+1);
-  
-  for (size_t i=0; i<size; ++i){
-    buf[i] = s[i];
-  }
-  return buf;
+#ifndef CHAOS_STRDUP
+#include <string.h>
+
+static char* chaos_strdup(const char *s) {
+    size_t len = strlen(s) + 1;
+    char *buf = (char*)CHAOS_REALLOC(NULL, len);
+    if (!buf) return NULL;
+    memcpy(buf, s, len);
+    return buf;
 }
+
+#define CHAOS_STRDUP chaos_strdup
 #endif
 
 #define CHAOS_ARRAY_LEN(array) (sizeof(array)/sizeof(array[0]))
@@ -675,7 +680,7 @@ CHAOSDEF CHAOS_BOOL chaos_cmd_run(Chaos_cmd_arr *arr) {
   int ret = system(cmd);
   if (ret == -1) perror("system");
 
-  free(cmd);
+  CHAOS_FREE(cmd);
   arr->count = 0;
   
   return ret == 0; 
@@ -792,7 +797,7 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   va_start(ap, fmt);
   va_copy(ap2, ap);
 
-  size_t len = CHAOS_VSNPRINTF(NULL, 0, fmt, ap);
+  size_t len = (size_t)CHAOS_VSNPRINTF(NULL, 0, fmt, ap);
   va_end(ap);
   
   if (len < 0){
@@ -839,7 +844,7 @@ CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len) {
   for (size_t i = 0; i < bucket->count; ++i) {
     chaos_KV *kv = &bucket->items[i];
 
-    if (kv->key == key && strcmp(kv->value, value) == 0) {
+    if (kv->key == key && CHAOS_STRCMP(kv->value, value) == 0) {
       found = kv;
       break;
     }
@@ -850,7 +855,7 @@ CHAOSDEF void chaos_table_append(chaos_Table *t, char *value, size_t len) {
   } else {
     chaos_da_append(bucket, ((chaos_KV){
                                 .key = key,
-                                .value = strdup(value),
+                                .value = CHAOS_STRDUP(value),
                                 .freq = 1,
                             }));
     t->len++;
@@ -862,12 +867,12 @@ CHAOSDEF void chaos_table_free(chaos_Table *t) {
     chaos_Bucket *b = &t->items[i];
 
     for (size_t j = 0; j < b->count; ++j) {
-      free(b->items[j].value);
+      CHAOS_FREE(b->items[j].value);
     }
-    free(b->items);
+    CHAOS_FREE(b->items);
   }
 
-  free(t->items);
+  CHAOS_FREE(t->items);
   t->items = NULL;
   t->count = 0;
   t->capacity = 0;
@@ -913,10 +918,10 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count) {
       t->len++;
     }
 
-    free(b->items);
+    CHAOS_FREE(b->items);
   }
 
-  free(old_items);
+  CHAOS_FREE(old_items);
 }
 
 CHAOSDEF void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags,
@@ -947,6 +952,7 @@ CHAOSDEF void chaos_flags_print_help(const char *program_name, Chaos_Flag *flags
   }
 }
 
+#if defined(__unix__) || defined(_WIN32)
 CHAOSDEF CHAOS_BOOL chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
                                 size_t flag_count) {
 
@@ -1025,6 +1031,8 @@ CHAOSDEF CHAOS_BOOL chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
   }
   return true;
 }
+#endif
+
 #endif // CHAOS_IMPLEMENTATION
 
 
