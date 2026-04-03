@@ -1,4 +1,4 @@
-# The STB-style chaotic non-standard stdlib extension for C
+# The STB-style chaotic non-standard stdlib extension for C.
 
 - Usage:
   ```bash
