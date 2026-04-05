@@ -2,7 +2,7 @@
 
 - Usage:
   ```bash
-    wget https://raw.githubusercontent.com/Shabani005/chaos.h/refs/heads/master/chaos.h
+    wget https://codeberg.org/shabani005/chaos.h/raw/branch/master/chaos.h
   ```
 
 - Build Examples:
