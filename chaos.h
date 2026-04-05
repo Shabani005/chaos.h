@@ -6,11 +6,14 @@
   Good to knows:
   - String_Builders are basically like Java String builders, which means they're not supposed to be null terminated
   - Dynamic Arrays are structures with a pointer to another structure or type. It is supposed to follow this structure:
-      items (pointer)
-      count
-      capacity
-  - chaos_temp_sprintf() returns a pointer to a null terminater string on the stack, which means that it WILL be reset when
-    called, this is why we introduced 20 temporary buffers -> temporarily allocated string will only get overwritten after 20 calls.
+      items    (ptr)
+      count    (size_t)
+      capacity (size_t)
+  - chaos_temp_sprintf() returns a pointer to a statically allocated null terminated string, which means that it WILL be reset when
+    called, this is why we introduced 20 temporary buffers (now)-> temporarily allocated string will only get overwritten after 20 calls
+    of chaos_temp_sprintf()
+  - #define CHAOS_GC modifies functions like arena_alloc() and arena_sprintf() making them act like malloc() and sprintf() by implicitly
+    passing a defualt arena that is auto freed before program exit (if nothing fails)
 */
 
 #ifndef CHAOS_H_

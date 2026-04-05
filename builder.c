@@ -19,6 +19,9 @@ int main(int argc, char** argv){
 
   cmd_arr cmd = {0};
 
+  cmd_append(&cmd, "mkdir -p ./build");
+  cmd_run(&cmd);
+  
   cc_flags_run(&cmd, "001_simple");
   cc_flags_run(&cmd, "002_src_hello_builder");
   cc_flags_run(&cmd, "003_free_at_exit_gc");
