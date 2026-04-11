@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.13.12
+  chaos.h - v1.14.12
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -15,6 +15,8 @@
   - #define CHAOS_GC modifies functions like arena_alloc() and arena_sprintf() making them act like malloc() and sprintf() by implicitly
     passing a defualt arena that is auto freed before program exit (if nothing fails)
 */
+
+#pragma once
 
 #ifndef CHAOS_H_
 #define CHAOS_H_
@@ -264,6 +266,8 @@ CHAOSDEF void chaos_sv_to_sb(Chaos_String_View *sv, Chaos_String_Builder *sb);
 CHAOSDEF CHAOS_BOOL chaos_starts_with_b(Chaos_String_Builder sb, char *text);
 CHAOSDEF CHAOS_BOOL chaos_starts_with_v(Chaos_String_View sv, char *text);
 CHAOSDEF CHAOS_BOOL chaos_sv_equal_cstr(Chaos_String_View *sv, char *str);
+CHAOSDEF CHAOS_BOOL chaos_sv_eq_sv(Chaos_String_View *sv, Chaos_String_View *sv2);
+
 /*
   ================= Build System UTILITIES ===============
 */
@@ -382,6 +386,7 @@ CHAOSDEF void chaos_table_free(chaos_Table *t);
   #define starts_with       chaos_starts_with
   #define table_free        chaos_table_free
   #define sv_equal_cstr     chaos_sv_equal_cstr
+  #define sv_eq_sv          chaos_sv_eq_sv
 #endif
 
 
@@ -398,7 +403,7 @@ CHAOSDEF void chaos_table_free(chaos_Table *t);
 
 #ifdef CHAOS_IMPLEMENTATION
 
-#ifdef __unix
+#ifdef __unix__
 CHAOSDEF CHAOS_BOOL chaos_read_file(char* file_name, Chaos_String_Builder *sb)
 { 
   FILE *f = fopen(file_name, "rb");
@@ -1039,7 +1044,12 @@ CHAOSDEF CHAOS_BOOL chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
 
 CHAOSDEF CHAOS_BOOL chaos_sv_equal_cstr(Chaos_String_View *sv, char *str) {
   size_t len = CHAOS_STRLEN(str);
-  return sv->count == len && memcmp(sv->data, "return", len) == 0;
+  return sv->count == len && CHAOS_MEMCMP(sv->data, str, len) == 0;
+}
+
+
+CHAOSDEF CHAOS_BOOL chaos_sv_eq_sv(Chaos_String_View *sv, Chaos_String_View *sv2) {
+  return sv->count == sv2->count && CHAOS_MEMCMP(sv->data, sv2->data, sv->count) == 0;
 }
 #endif // CHAOS_IMPLEMENTATION
 
