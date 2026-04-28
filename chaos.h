@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.14.12
+  chaos.h - v1.15.14
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -91,10 +91,10 @@
 #include <string.h>
 
 static char* chaos_strdup(const char *s) {
-    size_t len = strlen(s) + 1;
+    size_t len = CHAOS_STRLEN(s) + 1;
     char *buf = (char*)CHAOS_REALLOC(NULL, len);
     if (!buf) return NULL;
-    memcpy(buf, s, len);
+    CHAOS_MEMCPY(buf, s, len);
     return buf;
 }
 
@@ -130,6 +130,12 @@ static char* chaos_strdup(const char *s) {
         (da)->items[(da)->count++] = (item);     \
     } while (0)
 
+#define chaos_da_foreach(it, da) for (__typeof__(*(da)->items) *it = (da)->items; it < (da)->items + (da)->count; ++it)
+
+#define CHAOS_S_FMT "%.*s"
+#define CHAOS_SV_PRINTER(sv) (int)(sv).count, (sv).data
+#define CHAOS_SB_PRINTER(sb) (int)(sb).count, (sb).items
+
 #ifdef __unix__
   #include <unistd.h>
 #elif defined(_WIN32)
@@ -144,7 +150,7 @@ static char* chaos_strdup(const char *s) {
   #define CHAOS_BOOL bool
 #else
   typedef enum {false, true} bool;
-  #define CHAOS_BOOL bool;
+  #define CHAOS_BOOL bool
 #endif
 
 
@@ -158,7 +164,7 @@ static char* chaos_strdup(const char *s) {
 
 #else
   #ifndef UINT8_T
-    #define UINT8_T usigned char
+    #define UINT8_T unsigned char
   #endif
 
   #ifndef UINT32_T
@@ -274,7 +280,7 @@ CHAOSDEF CHAOS_BOOL chaos_sv_eq_sv(Chaos_String_View *sv, Chaos_String_View *sv2
 
 CHAOSDEF void       chaos_cmd_append(Chaos_cmd_arr *arr, char* value);
 CHAOSDEF CHAOS_BOOL chaos_cmd_run(Chaos_cmd_arr *arr);
-CHAOSDEF void chaos_copy_file(char* original_name, char* clone_name); 
+CHAOSDEF void       chaos_copy_file(char* original_name, char* clone_name); 
 CHAOSDEF void       chaos_rebuild(int argc, char **argv, char* filename);
 
 /*
@@ -387,6 +393,10 @@ CHAOSDEF void chaos_table_free(chaos_Table *t);
   #define table_free        chaos_table_free
   #define sv_equal_cstr     chaos_sv_equal_cstr
   #define sv_eq_sv          chaos_sv_eq_sv
+  #define SB_PRINTER        CHAOS_SB_PRINTER
+  #define SV_PRINTER        CHAOS_SV_PRINTER
+  #define da_foreach        chaos_da_foreach
+  #define S_FMT             CHAOS_S_FMT
 #endif
 
 
@@ -488,11 +498,23 @@ CHAOSDEF char* chaos_temp_sprintf(const char *fmt, ...) {
 
     char *out = bufs[idx++ % CHAOS_TMP_BUF_COUNT];
 
-    va_list ap;
+    va_list ap, ap2;
     va_start(ap, fmt);
-    CHAOS_VSNPRINTF(out, CHAOS_TMP_BUF_SIZE, fmt, ap);
-    va_end(ap);
+    va_copy(ap2, ap);
 
+    int needed = CHAOS_VSNPRINTF(NULL, 0, fmt, ap);
+  
+    if (needed < 0) {
+        va_end(ap2);
+        out[0] = '\0';
+        return out;
+    }
+
+    if ((size_t)needed >= CHAOS_TMP_BUF_SIZE)
+      CHAOS_FPRINTF(stderr, "formatted string exceeds temp buffer size\n");
+
+    CHAOS_VSNPRINTF(out, CHAOS_TMP_BUF_SIZE, fmt, ap2);
+    va_end(ap2);
     return out;
 }
 
@@ -700,6 +722,7 @@ CHAOSDEF void chaos_copy_file(char* original_name, char* clone_name){
   
   chaos_read_file(original_name, &sb);
   chaos_write_file(clone_name, &sb);
+  CHAOS_FREE(sb.items);
 } 
 
 CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
@@ -806,7 +829,7 @@ CHAOSDEF char* chaos_arena_sprintf(chaos_arena *a, const char* fmt, ...){
   va_start(ap, fmt);
   va_copy(ap2, ap);
 
-  size_t len = (size_t)CHAOS_VSNPRINTF(NULL, 0, fmt, ap);
+  int len = CHAOS_VSNPRINTF(NULL, 0, fmt, ap);
   va_end(ap);
   
   if (len < 0){
@@ -912,7 +935,7 @@ CHAOSDEF void chaos_table_rehash(chaos_Table *t, size_t new_bucket_count) {
   chaos_Bucket *old_items = t->items;
   size_t old_count = t->count;
 
-  t->items = (chaos_Bucket*)(new_bucket_count, sizeof(chaos_Bucket));
+  t->items = (chaos_Bucket*)CHAOS_CALLOC(new_bucket_count, sizeof(chaos_Bucket));
   t->count = new_bucket_count;
   t->len = 0;
 
