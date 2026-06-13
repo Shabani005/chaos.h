@@ -1,5 +1,5 @@
 /*
-  chaos.h - v1.15.14
+  chaos.h - v1.15.15
   The name of this Library is inspired from chaos, an antonym of standard indicating it is an addition to the C standard
   library with some chaos embedded to it. ENJOY
 
@@ -223,7 +223,8 @@ typedef struct {
 
   CHAOS_BOOL present;
   Chaos_String_View value;
-  void (*dispatcher)(void);
+  void (*dispatcher)(void*);
+  void* ret;
 } Chaos_Flag;
 
 /*
@@ -241,6 +242,18 @@ typedef struct {
 #ifndef CHAOS_DA_INIT_CAP
 #define CHAOS_DA_INIT_CAP 256
 #endif // CHAOS_DA_INIT_CAP
+
+#define CHAOS_BLACK "\033[30m"
+#define CHAOS_RED "\033[31m"
+#define CHAOS_GREEN "\033[32m"
+#define CHAOS_YELLOW "\033[33m"
+#define CHAOS_BLUE "\033[34m"
+#define CHAOS_MAGENTA "\033[35m"
+#define CHAOS_CYAN "\033[36m"
+#define CHAOS_WHITE "\033[37m"
+#define CHAOS_BOLD "\033[1m"
+#define CHAOS_DIM "\033[2m"
+#define CHAOS_RESET "\033[0m"
 
 /*
   ======== FILE RELATED UTILITIES =========
@@ -706,7 +719,7 @@ CHAOSDEF CHAOS_BOOL chaos_cmd_run(Chaos_cmd_arr *arr) {
 
   cmd[pos] = '\0';
 
-  CHAOS_PRINTF("[CMD] %s\n", cmd);
+  CHAOS_PRINTF(CHAOS_CYAN"[CMD]"CHAOS_RESET" %s\n", cmd);
 
   int ret = system(cmd);
   if (ret == -1) perror("system");
@@ -735,7 +748,7 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
 
   if (!chaos_did_file_change(filename)) return;
   
-  CHAOS_PRINTF("[Rebuilding]\n");
+  CHAOS_PRINTF(CHAOS_RED"[Rebuilding]\n"CHAOS_RESET);
 
   chaos_copy_file(filename, old);
 
@@ -751,7 +764,7 @@ CHAOSDEF void chaos_rebuild(int argc, char **argv, char* filename){
   chaos_cmd_append(&cmd, filename);      
   chaos_cmd_run(&cmd);
 
-  CHAOS_PRINTF("[INFO] rebuilt %s\n\n", filename);
+  CHAOS_PRINTF(CHAOS_GREEN"[INFO]"CHAOS_RESET" rebuilt %s\n\n", filename);
 
   for (size_t i=0; i<argc; ++i) chaos_cmd_append(&cmd, argv[i]);
 
@@ -1046,8 +1059,9 @@ CHAOSDEF CHAOS_BOOL chaos_flags_parse(int argc, char **argv, Chaos_Flag *flags,
         flag->present = true;
         flag->value = value;
         matched = true;
+        void *void_value = (void*)&value;
         if (flag->dispatcher)
-          flag->dispatcher();
+          flag->dispatcher(void_value);
         break;
       }
     }
